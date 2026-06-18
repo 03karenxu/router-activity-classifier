@@ -9,9 +9,9 @@ from sklearn.model_selection import train_test_split
 
 
 # main preprocess function
-def preprocess(x,s):
+def preprocess(x, s):
     x = min_max_scale(x)
-    # x = fit_spline(x,s)
+    # x = fit_spline(x, s)
     return x
 
 
@@ -19,13 +19,11 @@ def preprocess(x,s):
 def plot_random_sample(x, y, i=-1):
     if i == -1:
         i = np.random.choice(x.shape[0])
-    row = x[i]
-    label = y[i]
-    plot_sample(row,label)
+    plot_sample(x[i], y[i])
 
 
 # plots a specified sample
-def plot_sample(x,y):
+def plot_sample(x, y):
     plt.plot(x)
     plt.xlabel("Time Step")
     plt.ylabel("Router Activity")
@@ -47,27 +45,23 @@ def plot_all(label, x, y):
 
 
 # loads data from csv and splits into train/test
-def load_data(file_path,test_ratio):
+def load_data(file_path, test_ratio):
     df = pd.read_csv(file_path, header=None)
-    x,y = split_features(df)
-    return train_test_split(
-        x, y, test_size=test_ratio, stratify=y
-    )
+    x, y = split_features(df)
+    return train_test_split(x, y, test_size=test_ratio, stratify=y)
 
 
 # splits features from labels
 def split_features(df):
     x = df.iloc[:, :-1].values.astype(float)
     y = df.iloc[:, -1].values.astype(int)
-    return x,y
+    return x, y
 
 
 # scales sample-wise to values between 0 and 1
 def min_max_scale(x):
-    # x_min = x.min()
-    # x_max = x.max()
-    x_min = x.min(axis=1,keepdims=True)
-    x_max = x.max(axis=1,keepdims=True)
+    x_min = x.min(axis=1, keepdims=True)
+    x_max = x.max(axis=1, keepdims=True)
     return (x - x_min) / (x_max - x_min + 1e-9)
 
 
@@ -79,14 +73,13 @@ def apply_smote(x, y):
 
 
 # fits a univariate spline to all samples
-def fit_spline(x,s):
-    x_smoothed = []
+def fit_spline(x, s):
     time_steps = np.arange(x.shape[1])
-    for sample in x:
-        spl = UnivariateSpline(time_steps,sample,s=s) 
-        smoothed_sample = spl(time_steps) 
-        x_smoothed.append(smoothed_sample) 
-    return np.array(x_smoothed)
+    x_smoothed = np.array([
+        UnivariateSpline(time_steps, sample, s=s)(time_steps)
+        for sample in x
+    ])
+    return x_smoothed
 
 
 # prints processed data to csv
